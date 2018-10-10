@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="Ant for LS Salesforce Migration Tool" default="post" xmlns:sf="antlib:com.salesforce">
+	<!-- Libraries -->
+	<taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
+		<classpath>
+			<pathelement location="dist/lib/ant-salesforce.jar"/>
+		</classpath>
+	</taskdef>
+
+	<!-- Properties -->
+	<condition property="isValidate" value="true">
+		<not>
+			<equals arg1="${post_type}" arg2="deploy"/>
+		</not>
+	</condition>
+	<condition property="isValidate" value="false">
+		<equals arg1="${post_type}" arg2="deploy"/>
+	</condition>
+
+	<!-- -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
+	<!-- -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* Tools -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*- -->
+
+	<target name="post">
+		<property name="folder" value="post"/>
+		<echo>${post_type} ${folder} to ${username}</echo>
+		<sf:deploy checkOnly="${isValidate}" deployRoot="${folder}" testLevel="${test_level}"
+				   rollbackOnError="true" serverurl="${serverurl}" maxPoll="${maxPoll}"
+				   password="${password}" username="${username}" pollWaitMillis="1000"/>
+	</target>
+
+	<target name="postnotest">
+		<property name="folder" value="post"/>
+		<echo>${post_type} ${folder} to ${username}</echo>
+		<sf:deploy checkOnly="${isValidate}" deployRoot="${folder}"
+				   rollbackOnError="true" serverurl="${serverurl}"  maxPoll="${maxPoll}"
+				   password="${password}" username="${username}" pollWaitMillis="1000"/>
+	</target>
+</project>

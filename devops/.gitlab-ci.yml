@@ -1,0 +1,76 @@
+image: python:3.6
+stages:
+    - build
+
+build:
+    stage: build
+    script:
+        # Configure
+            - python -m pip install nuitka
+            - mkdir dist_$CI_COMMIT_TAG
+            - mkdir dist_$CI_COMMIT_TAG/lib
+        # Build Send Email
+            - cd sendemail
+            - python -m pip install -r requirements.txt
+            - python -m nuitka send_email.py --standalone --remove-output
+            - cd ..
+            # Bundle
+            - mkdir dist_$CI_COMMIT_TAG/sendemail
+            - mv sendemail/send_email.dist/send_email dist_$CI_COMMIT_TAG/sendemail/send_email.exe
+            - mv sendemail/resources dist_$CI_COMMIT_TAG/sendemail
+            - mv -n sendemail/send_email.dist/* dist_$CI_COMMIT_TAG/lib
+        # Build Merger
+            - cd merger
+            - python -m pip install -r requirements.txt
+            - python -m nuitka merger.py --standalone --remove-output
+            - cd ..
+            # Bundle
+            - mkdir dist_$CI_COMMIT_TAG/merger
+            - mv merger/merger.dist/merger dist_$CI_COMMIT_TAG/merger/merger.exe
+            - mv merger/resources dist_$CI_COMMIT_TAG/merger
+            - mv -n merger/merger.dist/* dist_$CI_COMMIT_TAG/lib
+        # Build Migration Tool
+            - cd post2sf
+            - python -m pip install -r requirements.txt
+            - python -m nuitka post2sf.py --standalone --remove-output
+            - cd ..
+            # Bundle
+            - mkdir dist_$CI_COMMIT_TAG/migrationtool
+            - mv post2sf/post2sf.dist/post2sf dist_$CI_COMMIT_TAG/migrationtool/post2sf.exe
+            - mv -n post2sf/post2sf.dist/* dist_$CI_COMMIT_TAG/lib
+        # Build Gitlab Notification
+            - cd callgitlab
+            - python -m nuitka call_gitlab.py --standalone --remove-output
+            - cd ..
+            # Bundle
+            - mkdir dist_$CI_COMMIT_TAG/callgitlab
+            - mv callgitlab/call_gitlab.dist/call_gitlab dist_$CI_COMMIT_TAG/callgitlab/call_gitlab.exe
+            - mv -n callgitlab/call_gitlab.dist/* dist_$CI_COMMIT_TAG/lib
+        # Build PMD
+            # Bundle
+            - mkdir dist_$CI_COMMIT_TAG/pmd
+            - cp pmd/rules.xml dist_$CI_COMMIT_TAG/pmd
+        # Bundle misc
+            - mkdir dist_$CI_COMMIT_TAG/misc
+            - mv misc/validate_branch_name.sh dist_$CI_COMMIT_TAG/misc
+        # Create Symlinks
+            - cd dist_$CI_COMMIT_TAG
+            - cd callgitlab
+            - ln -s ../lib/* .
+            - cd ..
+            - cd migrationtool
+            - ln -s ../lib/* .
+            - cd ..
+            - cd sendemail
+            - ln -s ../lib/* .
+            - cd ..
+            - cd merger
+            - ln -s ../lib/* .
+            - cd ..
+            - cd ..
+    artifacts:
+        name: dist_$CI_COMMIT_TAG
+        paths:
+            - dist_$CI_COMMIT_TAG
+    only:
+        - tags
